@@ -6,22 +6,15 @@
 import { LocateFixed } from "lucide-react";
 
 type Props = {
-  setCity: (city: string) => void;
+  onLocate: () => void;
 };
 
-const CurrentLocation = ({ setCity }: Props) => {
-  /**
-   * getCity
-   * Placeholder qui retourne une ville fixe. Remplacer par une vraie géolocalisation.
-   */
-  function getCity() {
-    return "Bamako";
-  }
+const CurrentLocation = ({ onLocate }: Props) => {
 
   return (
     <button
       className="btn btn-success flex items-center gap-2 rounded-full"
-      onClick={() => setCity(getCity())}
+      onClick={onLocate}
     >
       <LocateFixed />
       Current Location

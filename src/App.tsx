@@ -8,7 +8,7 @@
  */
 import { useState, useEffect } from 'react'
 import './App.css'
-import CurrentLocation from './components/CurrentLocation' 
+import CurrentLocation from './components/CurrentLocation'
 import Hourly from './components/Hourly'
 import Loader from './components/Loader'
 import LocationName from './components/LocationName'
@@ -35,7 +35,37 @@ function App() {
    * À remplacer par une géolocalisation ou une logique plus robuste.
    */
   function getCity() {
-    return "maroc";
+    if (!navigator.geolocation) {
+      setError("Géolocalisation non supportée");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        try {
+          const { latitude, longitude } = pos.coords;
+
+          // 🔁 Reverse geocoding via OpenWeather
+          const res = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`
+          );
+
+          const data = await res.json();
+
+          if (data.cod !== 200) {
+            setError("Impossible de déterminer la ville");
+            return;
+          }
+
+          const cityName = data.name; // ✅ string
+          setCity(cityName);          // 🔥 déclenche fetchWeather(city)
+
+        } catch {
+          setError("Erreur lors de la récupération de la ville");
+        }
+      },
+      () => setError("Permission refusée")
+    );
   }
 
   /**
@@ -45,7 +75,7 @@ function App() {
    */
   function getWeatherIcon(main: string) {
     switch (main) {
-      case "Clear": 
+      case "Clear":
         return <Sun className="h-8 w-8 text-yellow-400" />;
       case "Clouds":
         return <Cloud className="h-8 w-8 text-gray-400" />;
@@ -78,11 +108,6 @@ function App() {
     fetchWeather(city);
     fetchForecast(city)
   }, [city]);
-
-  // search: fonction placeholder destinée à étendre la logique de recherche (non utilisée pour l'instant)
-  const search = () => {
-    console.log('recherche...')
-  }
 
   /**
    * fetchWeather
@@ -184,8 +209,8 @@ function App() {
     <div className='min-h-screen bg-base-200 p-5 flex flex-col items-center'>
       <header className='flex items-center md:justify-between gap-3 flex-wrap justify-center w-full max-w-7xl'>
         <ToogleMode />
-        <SearchBox   city={city} setCity={setCity}/>
-        <CurrentLocation setCity={setCity} />
+        <SearchBox city={city} setCity={setCity} />
+        <CurrentLocation onLocate={getCity} />
       </header>
       {loading && <Loader />}
       {error && <p className="text-error text-center mt-10">{error}</p>}
